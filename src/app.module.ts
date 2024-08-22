@@ -8,9 +8,7 @@ import { Board } from './apis/boards/entities/board.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true, // Makes the ConfigModule globally available
-    }),
+    ConfigModule.forRoot(),
     BoardsModule,
     // ProductsModule,    // 각각의 모듈을 app.module.ts 에서 합쳐준다
     // UsersModule,
@@ -18,20 +16,16 @@ import { Board } from './apis/boards/entities/board.entity';
       driver: ApolloDriver,
       autoSchemaFile: 'src/commons/graphql/schema.gql',
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-        entities: [Board], // register all declared entities
-        synchronize: true,
-        logging: true,
-      }),
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
+      entities: [Board], // register all declared entities
+      synchronize: true,
+      logging: true,
     }),
   ],
 })
