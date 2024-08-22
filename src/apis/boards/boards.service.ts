@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Board } from './entities/board.entity';
+import { CreateBoardInput } from './dto/create-board.input';
 
 // injection scopes : Singleton (new only once) (default option)
 //                    Request scope (new on every request)
@@ -33,11 +34,11 @@ export class BoardsService {
     return result;
   }
 
-  create(writer: string, title: string, contents: string): string {
+  create({ createBoardInput }): string {
     // 1. logging data sent from browser
-    console.log(writer);
-    console.log(title);
-    console.log(contents);
+    console.log(createBoardInput.writer);
+    console.log(createBoardInput.title);
+    console.log(createBoardInput.contents);
 
     // 2. assuming we accessed DB & saved data
 
