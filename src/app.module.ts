@@ -23,7 +23,7 @@ import { Board } from './apis/boards/entities/board.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [Board], // register all declared entities
+      entities: [__dirname + '/apis/**/*.entity.*'], // register all files in apis/ that end with '.entity' as entities
       synchronize: true,
       logging: true,
     }),
