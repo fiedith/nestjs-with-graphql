@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { BoardsModule } from './apis/boards/boards.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Board } from './apis/boards/entities/board.entity';
+import { ProductsModule } from './apis/products/products.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     BoardsModule,
-    // ProductsModule,    // 각각의 모듈을 app.module.ts 에서 합쳐준다
+    ProductsModule,
     // UsersModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
