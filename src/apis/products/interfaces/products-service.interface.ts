@@ -18,3 +18,7 @@ export interface IProductsServiceUpdate {
 export interface IProductsServiceCheckSoldout {
   product: Product;
 }
+
+export interface IProductsServiceDelete {
+  productId: string;
+}

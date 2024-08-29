@@ -6,6 +6,7 @@ import {
   IProductServiceFindOne,
   IProductsServiceCheckSoldout,
   IProductsServiceCreate,
+  IProductsServiceDelete,
   IProductsServiceUpdate,
 } from './interfaces/products-service.interface';
 import { UpdateProductInput } from './dto/update-product.input';
@@ -56,5 +57,11 @@ export class ProductsService {
       ...updateProductInput, // 수정된 내용
     });
     return result;
+  }
+
+  // Repository.delete()는 db에서 실제로 없애버리므로 soft delete하기
+  async delete({ productId }: IProductsServiceDelete): Promise<boolean> {
+    const result = await this.productsRepository.softDelete({ id: productId });
+    return result.affected ? true : false;
   }
 }

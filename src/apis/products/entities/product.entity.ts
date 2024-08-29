@@ -5,6 +5,7 @@ import { ProductTag } from 'src/apis/productsTags/entities/productsTags.entity';
 import { User } from 'src/apis/users/user.entity';
 import {
   Column,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   JoinTable,
@@ -55,4 +56,7 @@ export class Product {
   @ManyToMany(() => ProductTag, (productTags) => productTags.products)
   @Field(() => [ProductTag])
   productTags: ProductTag[];
+
+  @DeleteDateColumn() // deleted date for soft removal
+  deletedAt: Date;
 }
