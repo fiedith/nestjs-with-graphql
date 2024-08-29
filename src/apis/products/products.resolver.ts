@@ -2,6 +2,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { ProductsService } from './products.service';
 import { CreateProductInput } from './dto/create-product.input';
 import { Product } from './entities/product.entity';
+import { UpdateProductInput } from './dto/update-product.input';
 
 @Resolver()
 export class ProductsResolver {
@@ -27,5 +28,13 @@ export class ProductsResolver {
   ): Promise<Product> {
     // 등록된 내용이 담긴 객체를 그대로 브라우저에 return
     return this.productsService.create({ createProductInput });
+  }
+
+  @Mutation(() => Product)
+  updateProduct(
+    @Args('productId') productId: string,
+    @Args('updateProductInput') updateProductInput: UpdateProductInput,
+  ): Promise<Product> {
+    return this.productsService.update({ productId, updateProductInput });
   }
 }
