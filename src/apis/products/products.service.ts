@@ -9,27 +9,43 @@ import {
   IProductsServiceDelete,
   IProductsServiceUpdate,
 } from './interfaces/products-service.interface';
-import { UpdateProductInput } from './dto/update-product.input';
+import { ProductsSalesLocationsService } from '../productsSalesLocations/productsSalesLocations.service';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>, //
+    private readonly productsSalesLocationsService: ProductsSalesLocationsService,
   ) {}
 
   findAll(): Promise<Product[]> {
-    return this.productsRepository.find();
+    return this.productsRepository.find({
+      relations: ['productSalesLocation'], // joins productSalesLocation table
+    });
   }
 
   findOne({ productId }: IProductServiceFindOne): Promise<Product> {
-    return this.productsRepository.findOne({ where: { id: productId } });
+    return this.productsRepository.findOne({
+      where: { id: productId },
+      relations: ['productSalesLocation'], // joins productSalesLocation table
+    });
   }
 
-  create({ createProductInput }: IProductsServiceCreate): Promise<Product> {
-    const result = this.productsRepository.save({
-      ...createProductInput,
+  async create({
+    createProductInput,
+  }: IProductsServiceCreate): Promise<Product> {
+    const { productSalesLocation, ...product } = createProductInput;
+
+    const location = await this.productsSalesLocationsService.create({
+      productSalesLocation,
     });
+
+    const result = this.productsRepository.save({
+      ...product,
+      productSalesLocation: location,
+    });
+
     return result;
   }
 

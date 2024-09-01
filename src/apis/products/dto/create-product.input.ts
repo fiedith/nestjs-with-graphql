@@ -1,5 +1,6 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { Min } from 'class-validator';
+import { ProductSalesLocationInput } from 'src/apis/productsSalesLocations/dto/product-saleslocation.input';
 
 @InputType()
 export class CreateProductInput {
@@ -12,4 +13,7 @@ export class CreateProductInput {
   @Min(0) // validates price value above 0
   @Field(() => Int)
   price: number;
+
+  @Field(() => ProductSalesLocationInput)
+  productSalesLocation: ProductSalesLocationInput;
 }
