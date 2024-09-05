@@ -10,6 +10,8 @@ import {
   IProductsServiceUpdate,
 } from './interfaces/products-service.interface';
 import { ProductsSalesLocationsService } from '../productsSalesLocations/productsSalesLocations.service';
+import { ProductsTagsService } from '../productsTags/productsTags.service';
+import { ProductTag } from '../productsTags/entities/productsTags.entity';
 
 @Injectable()
 export class ProductsService {
@@ -17,6 +19,7 @@ export class ProductsService {
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>, //
     private readonly productsSalesLocationsService: ProductsSalesLocationsService,
+    private readonly productsTagsService: ProductsTagsService,
   ) {}
 
   findAll(): Promise<Product[]> {
@@ -35,19 +38,39 @@ export class ProductsService {
   async create({
     createProductInput,
   }: IProductsServiceCreate): Promise<Product> {
-    const { productSalesLocation, productCategoryId, ...product } =
+    const { productSalesLocation, productCategoryId, productTags, ...product } =
       createProductInput;
 
+    // 상품 거래 location 등록
     const location = await this.productsSalesLocationsService.create({
       productSalesLocation,
     });
 
-    const result = this.productsRepository.save({
+    // 상품 태그 등록
+    // ['#전자제품', '#도서'] 등과 같은 패턴이라 가정할 때 # 제거
+    const tagNames = productTags.map((el) => el.replace('#', ''));
+
+    const existingTags = await this.productsTagsService.findByNames({
+      tagNames,
+    });
+
+    const temp = [];
+    tagNames.forEach((el) => {
+      const exists = existingTags.find((existingEl) => el === existingEl.name);
+      if (!exists) temp.push({ name: el });
+    });
+
+    const newTags = await this.productsTagsService.bulkInsert({ names: temp });
+
+    const tags = [...existingTags, newTags.identifiers];
+
+    const result = await this.productsRepository.save({
       ...product,
       productSalesLocation: location,
       productCategory: {
         id: productCategoryId,
       },
+      productTags: tags,
     });
 
     return result;
