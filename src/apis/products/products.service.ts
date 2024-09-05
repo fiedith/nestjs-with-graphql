@@ -21,21 +21,22 @@ export class ProductsService {
 
   findAll(): Promise<Product[]> {
     return this.productsRepository.find({
-      relations: ['productSalesLocation'], // joins productSalesLocation table
+      relations: ['productSalesLocation', 'productCategory'], // joins productSalesLocation and productCategory table
     });
   }
 
   findOne({ productId }: IProductServiceFindOne): Promise<Product> {
     return this.productsRepository.findOne({
       where: { id: productId },
-      relations: ['productSalesLocation'], // joins productSalesLocation table
+      relations: ['productSalesLocation', 'productCategory'], // joins productSalesLocation table
     });
   }
 
   async create({
     createProductInput,
   }: IProductsServiceCreate): Promise<Product> {
-    const { productSalesLocation, ...product } = createProductInput;
+    const { productSalesLocation, productCategoryId, ...product } =
+      createProductInput;
 
     const location = await this.productsSalesLocationsService.create({
       productSalesLocation,
@@ -44,6 +45,9 @@ export class ProductsService {
     const result = this.productsRepository.save({
       ...product,
       productSalesLocation: location,
+      productCategory: {
+        id: productCategoryId,
+      },
     });
 
     return result;
