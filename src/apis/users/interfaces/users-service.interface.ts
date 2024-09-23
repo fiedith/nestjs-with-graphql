@@ -4,3 +4,7 @@ export interface IUsersServiceCreate {
   name: string;
   age: number;
 }
+
+export interface IUsersServiceFindOneByEmail {
+  email: string;
+}
