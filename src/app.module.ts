@@ -6,6 +6,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from './apis/products/products.module';
 import { ProductsCategoriesModule } from './apis/productsCategories/productsCategories.module';
+import { UsersModule } from './apis/users/users.module';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { ProductsCategoriesModule } from './apis/productsCategories/productsCate
     BoardsModule,
     ProductsModule,
     ProductsCategoriesModule,
-    // UsersModule,
+    UsersModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: 'src/commons/graphql/schema.gql',
