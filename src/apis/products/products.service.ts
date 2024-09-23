@@ -11,7 +11,6 @@ import {
 } from './interfaces/products-service.interface';
 import { ProductsSalesLocationsService } from '../productsSalesLocations/productsSalesLocations.service';
 import { ProductsTagsService } from '../productsTags/productsTags.service';
-import { ProductTag } from '../productsTags/entities/productsTags.entity';
 
 @Injectable()
 export class ProductsService {
@@ -41,36 +40,46 @@ export class ProductsService {
     const { productSalesLocation, productCategoryId, productTags, ...product } =
       createProductInput;
 
-    // 상품 거래 location 등록
+    // Save productSalesLocation
     const location = await this.productsSalesLocationsService.create({
       productSalesLocation,
     });
 
-    // 상품 태그 등록
-    // ['#전자제품', '#도서'] 등과 같은 패턴이라 가정할 때 # 제거
+    // Process product tags
     const tagNames = productTags.map((el) => el.replace('#', ''));
 
+    // Find existing tags
     const existingTags = await this.productsTagsService.findByNames({
       tagNames,
     });
 
-    const temp = [];
-    tagNames.forEach((el) => {
-      const exists = existingTags.find((existingEl) => el === existingEl.name);
-      if (!exists) temp.push({ name: el });
-    });
+    // Identify new tags to insert
+    const newTagNames = tagNames.filter(
+      (name) => !existingTags.some((tag) => tag.name === name),
+    );
 
-    const newTags = await this.productsTagsService.bulkInsert({ names: temp });
+    // Insert new tags
+    let newTags = [];
+    if (newTagNames.length > 0) {
+      const result = await this.productsTagsService.bulkInsert({
+        names: newTagNames.map((name) => ({ name })),
+      });
 
-    const tags = [...existingTags, newTags.identifiers];
+      // Fetch newly inserted tags
+      newTags = await this.productsTagsService.findByNames({
+        tagNames: newTagNames,
+      });
+    }
 
+    // Combine existing and new tags
+    const allTags = [...existingTags, ...newTags];
+
+    // Save product with relations
     const result = await this.productsRepository.save({
       ...product,
       productSalesLocation: location,
-      productCategory: {
-        id: productCategoryId,
-      },
-      productTags: tags,
+      productCategory: { id: productCategoryId },
+      productTags: allTags, // Must be full entities, not just identifiers
     });
 
     return result;
@@ -89,17 +98,59 @@ export class ProductsService {
     productId,
     updateProductInput,
   }: IProductsServiceUpdate): Promise<Product> {
+    // Find the product
     const product = await this.findOne({ productId });
     this.checkSoldout({ product });
 
-    // this.productsRepository.create();  // DB 접속과 무관하게 등록을 위한 객체 생성
-    // this.productsRepository.insert();  // 등록이지만 등록 결과를 객체로 못 돌려 받음
-    // this.productsRepository.update();  // 수정이지만 수정 결과를 객체로 못 돌려 받음
-    const result = this.productsRepository.save({
-      ...product, // 수정되지 않은 내용까지 객체에 담기
-      ...updateProductInput, // 수정된 내용
+    const { productTags, productSalesLocation, ...updateData } =
+      updateProductInput;
+
+    // Handle productTags update (convert string tags to ProductTag entities)
+    let updatedTags = [];
+    if (productTags) {
+      const tagNames = productTags.map((tag) => tag.replace('#', ''));
+      const existingTags = await this.productsTagsService.findByNames({
+        tagNames,
+      });
+
+      // Find or create new tags
+      const newTagNames = tagNames.filter(
+        (name) => !existingTags.some((tag) => tag.name === name),
+      );
+
+      if (newTagNames.length > 0) {
+        const newTags = await this.productsTagsService.bulkInsert({
+          names: newTagNames.map((name) => ({ name })),
+        });
+
+        // Fetch newly created tags
+        const fetchedNewTags = await this.productsTagsService.findByNames({
+          tagNames: newTagNames,
+        });
+
+        updatedTags = [...existingTags, ...fetchedNewTags];
+      } else {
+        updatedTags = existingTags;
+      }
+    }
+
+    // Handle productSalesLocation update (resolve entity if necessary)
+    let updatedLocation = product.productSalesLocation; // default to existing location
+    if (productSalesLocation) {
+      updatedLocation = await this.productsSalesLocationsService.create({
+        productSalesLocation,
+      });
+    }
+
+    // Save the updated product
+    const result = await this.productsRepository.save({
+      ...product, // original product data
+      ...updateData, // updated fields
+      productSalesLocation: updatedLocation, // updated location entity
+      productTags: updatedTags.length > 0 ? updatedTags : product.productTags, // updated tags or keep existing ones
     });
-    return result;
+
+    return result as Product;
   }
 
   // Repository.delete()는 db에서 실제로 없애버리므로 soft delete하기
